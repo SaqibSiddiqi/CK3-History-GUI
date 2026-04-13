@@ -65,6 +65,7 @@
   <Project Path="Unity.PathTracing.Runtime.csproj" />
   <Project Path="Unity.2D.Common.Runtime.csproj" />
   <Project Path="Unity.PathTracing.Editor.csproj" />
+  <Project Path="SimpleFileBrowser.Runtime.csproj" />
   <Project Path="Unity.InputSystem.TestFramework.csproj" />
   <Project Path="Unity.ShaderGraph.Utilities.csproj" />
   <Project Path="Unity.VisualScripting.Shared.Editor.csproj" />
