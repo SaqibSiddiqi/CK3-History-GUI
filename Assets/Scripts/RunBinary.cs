@@ -37,6 +37,9 @@ public class RunBinary : MonoBehaviour
     [SerializeField]
     Toggle templateToggle;
 
+    [SerializeField]
+    TMP_Text consoleText;
+
 
 
     //File Variables
@@ -46,6 +49,7 @@ public class RunBinary : MonoBehaviour
     string include;
     string gitPath;
     string executablePath = "REDACTED_PATH_TO_EXECUTABLE"; // Path to the executable, this will be set by the user through the UI
+    string jsonDump = @"\dump.json"; // The name of the dump file, this will be appended to the dumpData path when the --dump flag is used
 
     //Output Variables 
     int depth = 3;
@@ -174,6 +178,7 @@ public class RunBinary : MonoBehaviour
     {
         executablePath = Path.Combine(Application.streamingAssetsPath, "CK3 Extractor", "Binary", "ck3_history_extractor.exe");
         Debug.Log(executablePath);
+        consoleText.text = executablePath;
 
         var startInfo = new ProcessStartInfo
         {
@@ -193,7 +198,7 @@ public class RunBinary : MonoBehaviour
 
         // Add optional flags only when true
         if (noVis) startInfo.ArgumentList.Add("--no-vis");
-        if (dump) startInfo.ArgumentList.Add("--dump " + dumpData);
+        //if (dump) startInfo.ArgumentList.Add("-- --dump " + dumpData + jsonDump);
         if (noInteraction) startInfo.ArgumentList.Add("--no-interaction");
         if (useInternal) startInfo.ArgumentList.Add("--use-internal-templates");
 
@@ -205,15 +210,28 @@ public class RunBinary : MonoBehaviour
         }
 
         Debug.Log("Running CLI with arguments: " + string.Join(" ", startInfo.ArgumentList));
+        consoleText.text = "Running CLI with arguments: " + string.Join(" ", startInfo.ArgumentList);
+
         var process = new Process { StartInfo = startInfo };
+        
         process.Start();
 
+        consoleText.text += "\nProcess started with PID: " + process.Id + "A terminal should be running";
         string CLIout = process.StandardOutput.ReadToEnd();
         string CLIerr = process.StandardError.ReadToEnd();
-        process.WaitForExit();
+
+        consoleText.text += "\nProcess exited with code: " + process.ExitCode;
 
         if (!string.IsNullOrEmpty(CLIerr))
-            Debug.LogError("Error: " + CLIerr);
+        {
+            Debug.LogError("Error: " + CLIerr); 
+            consoleText.text += "\nError: " + CLIerr;
+        }
+        else
+        {
+            Debug.Log("Output: " + CLIout);
+            consoleText.text += "\nOutput: " + CLIout;
+        }
     }
     static string CleanSaveFileName(string fullPath)
     {
