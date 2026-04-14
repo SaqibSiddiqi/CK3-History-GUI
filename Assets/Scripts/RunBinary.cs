@@ -5,6 +5,8 @@ using Unity.VisualScripting;
 using UnityEngine;
 using SimpleFileBrowser;
 using System.Collections;
+using Debug = UnityEngine.Debug;
+using UnityEngine.UI;
 
 public class RunBinary : MonoBehaviour
 {
@@ -12,6 +14,17 @@ public class RunBinary : MonoBehaviour
     //UI Variables
     [SerializeField]
     TMP_Text saveFileText;
+    [SerializeField]
+    TMP_Dropdown languageDropdown;
+    [SerializeField]
+    TMP_Dropdown depthDropdown;
+
+    [SerializeField]
+    Toggle dumpToggle;
+    [SerializeField]
+    Button dumpButton;
+
+
 
     //File Variables
     string filename;
@@ -30,6 +43,7 @@ public class RunBinary : MonoBehaviour
     bool noInteraction;
     bool useInternal;
 
+    // Nullify the variables to prevent errors, they will be set by the user through the UI
     void Awake()
     {
         // Default values
@@ -44,8 +58,11 @@ public class RunBinary : MonoBehaviour
         noVis = false;
         noInteraction = false;
         useInternal = false;
+
+        dumpButton.interactable = false;
     }
 
+    // Button functions to set the variables, these will be called by the UI buttons
     public void GetInfo()
     {
         filename = saveFileText.text;
@@ -66,6 +83,36 @@ public class RunBinary : MonoBehaviour
         StartCoroutine(GamePathDialog());
     }
 
+    public void SetLanguage() 
+    {
+        language = languageDropdown.options[languageDropdown.value].text;
+    }
+
+    public void SetDepth()
+    {
+        depth = int.Parse(depthDropdown.options[depthDropdown.value].text);
+    }
+
+    public void SetDump()
+    {
+        if(dumpToggle.isOn)
+        {
+            dump = true;
+            dumpButton.interactable = true;
+        }
+        else
+        {
+            dump = false;
+            dumpButton.interactable = false;
+        }
+    }
+
+    public void runCLI()
+    {
+        //Run the executable with the given parameters
+    }
+
+    // Coroutines to open the file dialogs, these will be called by the button functions
     IEnumerator SaveDialog()
     {
         /* 
@@ -94,7 +141,7 @@ public class RunBinary : MonoBehaviour
 
         if (FileBrowser.Success)
         {
-            filename = FileBrowser.Result[0];
+            output = FileBrowser.Result[0];
         }
     }
 
@@ -107,8 +154,5 @@ public class RunBinary : MonoBehaviour
         }
     }
 
-    public void runCLI() 
-    {
-        //Run the executable with the given parameters
-    }
+
 }
