@@ -7,6 +7,8 @@ using SimpleFileBrowser;
 using System.Collections;
 using Debug = UnityEngine.Debug;
 using UnityEngine.UI;
+using System.IO;
+using UnityEngine.DedicatedServer;
 
 public class RunBinary : MonoBehaviour
 {
@@ -42,6 +44,8 @@ public class RunBinary : MonoBehaviour
     string output;
     string gamePath;
     string include;
+    string gitPath;
+    string executablePath = "REDACTED_PATH_TO_EXECUTABLE"; // Path to the executable, this will be set by the user through the UI
 
     //Output Variables 
     int depth = 3;
@@ -99,9 +103,14 @@ public class RunBinary : MonoBehaviour
         StartCoroutine(DumpData());
     }
 
+    public void OpenGitPathDialog()
+    {
+        StartCoroutine(GitFolder());
+    }
     public void SetLanguage() 
     {
         language = languageDropdown.options[languageDropdown.value].text;
+        language.ToLower();
     }
 
     public void SetDepth()
@@ -163,7 +172,58 @@ public class RunBinary : MonoBehaviour
 
     public void runCLI()
     {
-        //Run the executable with the given parameters
+        executablePath = Path.Combine(Application.streamingAssetsPath, "CK3 Extractor", "Binary", "ck3_history_extractor.exe");
+        Debug.Log(executablePath);
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = executablePath,
+            RedirectStandardError = true,
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+            CreateNoWindow = false,
+        };
+
+        // Add required args
+        startInfo.ArgumentList.Add(filename);
+        startInfo.ArgumentList.Add("--output"); startInfo.ArgumentList.Add(output);
+        startInfo.ArgumentList.Add("--game-path"); startInfo.ArgumentList.Add(gamePath);
+        startInfo.ArgumentList.Add("--language"); startInfo.ArgumentList.Add(language.ToLower());
+        startInfo.ArgumentList.Add("--depth"); startInfo.ArgumentList.Add(depth.ToString());
+
+        // Add optional flags only when true
+        if (noVis) startInfo.ArgumentList.Add("--no-vis");
+        if (dump) startInfo.ArgumentList.Add("--dump " + dumpData);
+        if (noInteraction) startInfo.ArgumentList.Add("--no-interaction");
+        if (useInternal) startInfo.ArgumentList.Add("--use-internal-templates");
+
+        // Add --dump-data only if dump is enabled and dumpData is set
+        if (dump && !string.IsNullOrEmpty(dumpData))
+        {
+            startInfo.ArgumentList.Add("--dump-data");
+            startInfo.ArgumentList.Add(dumpData);
+        }
+
+        Debug.Log("Running CLI with arguments: " + string.Join(" ", startInfo.ArgumentList));
+        var process = new Process { StartInfo = startInfo };
+        process.Start();
+
+        string CLIout = process.StandardOutput.ReadToEnd();
+        string CLIerr = process.StandardError.ReadToEnd();
+        process.WaitForExit();
+
+        if (!string.IsNullOrEmpty(CLIerr))
+            Debug.LogError("Error: " + CLIerr);
+    }
+    static string CleanSaveFileName(string fullPath)
+    {
+        // Get just the filename without directory and extension
+        string fileNameNoExt = Path.GetFileNameWithoutExtension(fullPath);
+
+        // Replace underscores with spaces
+        string cleaned = fileNameNoExt.Replace('_', ' ');
+
+        return cleaned;
     }
 
     // Coroutines to open the file dialogs, these will be called by the button functions
@@ -184,7 +244,8 @@ public class RunBinary : MonoBehaviour
         if (FileBrowser.Success)
         {
             filename = FileBrowser.Result[0];
-            saveFileText.text = filename;
+            saveFileText.text = CleanSaveFileName(filename);
+            saveFileText.enableAutoSizing = true;
         }
 
     }
@@ -218,6 +279,15 @@ public class RunBinary : MonoBehaviour
             dumpData = FileBrowser.Result[0];
         }
 
+    }
+
+    IEnumerator GitFolder()
+    {
+        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Folders, false, null, null, "Select Git Folder", "Select");
+        if (FileBrowser.Success)
+        {
+            string gitPath = FileBrowser.Result[0];
+        }
     }
 
 }
