@@ -24,6 +24,17 @@ public class RunBinary : MonoBehaviour
     [SerializeField]
     Button dumpButton;
 
+    [SerializeField]
+    Toggle visToggle;
+
+    [SerializeField]
+    Toggle devModeToggle;
+    [SerializeField]
+    GameObject devPanel;
+
+    [SerializeField]
+    Toggle templateToggle;
+
 
 
     //File Variables
@@ -83,6 +94,11 @@ public class RunBinary : MonoBehaviour
         StartCoroutine(GamePathDialog());
     }
 
+    public void OpenDumpPathDialog() 
+    { 
+        StartCoroutine(DumpData());
+    }
+
     public void SetLanguage() 
     {
         language = languageDropdown.options[languageDropdown.value].text;
@@ -93,7 +109,7 @@ public class RunBinary : MonoBehaviour
         depth = int.Parse(depthDropdown.options[depthDropdown.value].text);
     }
 
-    public void SetDump()
+    public void SetDumpButton()
     {
         if(dumpToggle.isOn)
         {
@@ -104,6 +120,44 @@ public class RunBinary : MonoBehaviour
         {
             dump = false;
             dumpButton.interactable = false;
+        }
+    }
+
+    public void checkVisToggle()
+    {
+        if (visToggle.isOn)
+        {
+            noVis = true;
+        }
+        else
+        {
+            noVis = false;
+        }
+    }
+
+    public void checkDevModeToggle()
+    {
+        if (devModeToggle.isOn)
+        {
+            noInteraction = true;
+            devPanel.SetActive(true);
+        }
+        else
+        {
+            noInteraction = false;
+            devPanel.SetActive(false);
+        }
+    }
+
+    public void checkTemplateToggle()
+    {
+        if (templateToggle.isOn)
+        {
+            useInternal = true;
+        }
+        else
+        {
+            useInternal = false;
         }
     }
 
@@ -137,6 +191,7 @@ public class RunBinary : MonoBehaviour
 
     IEnumerator OutputDialog() 
     {
+        
         yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Folders, false, null, null, "Select Output Folder", "Select");
 
         if (FileBrowser.Success)
@@ -154,5 +209,15 @@ public class RunBinary : MonoBehaviour
         }
     }
 
+    IEnumerator DumpData()
+    {
+        //Run the executable with the given parameters to dump the data, then read the output and store it in the dumpData variable
+        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Folders, false, null, null, "Select Dump Folder", "Select");
+        if (FileBrowser.Success)
+        { 
+            dumpData = FileBrowser.Result[0];
+        }
+
+    }
 
 }
