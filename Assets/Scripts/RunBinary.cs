@@ -335,7 +335,7 @@ public class RunBinary : MonoBehaviour
 
     public void HelpButton()
     {
-        Process.Start(Path.Combine(Application.streamingAssetsPath, "README.md"));
+        Process.Start("https://github.com/SaqibSiddiqi/CK3-History-GUI/blob/main/README.md");
     }
 
     public void OriginalRepo()
