@@ -15,7 +15,7 @@ Localization does not seem to be working so I have disabled it for now.
 # Help
 
 Save File - Choose your save file (in ck3. format)
-Game Folder - Select your game folder. Basically the Crusder Kings III folder
+Game Folder - Select your game folder. Basically the Crusder Kings III folder. If the button turns red, but the game is in the folder you pointed too, the program will run fine.
 Output Folder - Choose where you want the data be stored. It will create a new folder in the format : {Steam Username}'s History. If that folder exists then it will overwrite it
 
 Language - Not Implemented. 
