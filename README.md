@@ -31,7 +31,7 @@ The Update button opens the folder with the executable, just copy the new ck3_Hi
 
 # License
 
-I am using the MIT license available in the Repo. 
+I am using the MIT license for this project.
 
 
 
