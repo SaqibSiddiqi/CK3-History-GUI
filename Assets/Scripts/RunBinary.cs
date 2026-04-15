@@ -29,6 +29,7 @@ public class RunBinary : MonoBehaviour
     [SerializeField] Toggle templateToggle; // Toggle to enable or disable the --use-internal-templates flag
 
     // UI Button Variables
+    [SerializeField] Button gamePathButton; // Button to open the save file dialog
     [SerializeField] Button dumpButton; // Button to run the dump command
 
     // UI Panel Variables
@@ -64,19 +65,31 @@ public class RunBinary : MonoBehaviour
         DefineSerialized();
     }
 
+    void checkLinuxMac()
+    {
+#if !UNITY_EDITOR_Win && !UNITY_STANDALONE_WIN
+    var chmod = Process.Start("chmod", $"+x \"{executablePath}\"");
+    chmod.WaitForExit();
+#endif
+    }
+
     void DefineSerialized()
     {
         // This function is used to define the serialized variables
-        saveFileText = GameObject.Find("SaveFileText").GetComponent<TMP_Text>();
-        consoleText = GameObject.Find("ConsoleText").GetComponent<TMP_InputField>();
-        languageDropdown = GameObject.Find("LanguageDropdown").GetComponent<TMP_Dropdown>();
-        depthDropdown = GameObject.Find("DepthDropdown").GetComponent<TMP_Dropdown>();
-        dumpToggle = GameObject.Find("DumpToggle").GetComponent<Toggle>();
-        visToggle = GameObject.Find("VisToggle").GetComponent<Toggle>();
-        devModeToggle = GameObject.Find("DevModeToggle").GetComponent<Toggle>();
-        templateToggle = GameObject.Find("TemplateToggle").GetComponent<Toggle>();
-        dumpButton = GameObject.Find("DumpButton").GetComponent<Button>();
-        devPanel = GameObject.Find("DevPanel");
+        saveFileText ??= GameObject.Find("SaveFileText").GetComponent<TMP_Text>();
+        consoleText ??= GameObject.Find("ConsoleText").GetComponent<TMP_InputField>();
+
+        languageDropdown ??= GameObject.Find("LanguageDropdown").GetComponent<TMP_Dropdown>();
+        depthDropdown ??= GameObject.Find("DepthDropdown").GetComponent<TMP_Dropdown>();
+
+        dumpToggle ??= GameObject.Find("Dump").GetComponent<Toggle>();
+        visToggle ??= GameObject.Find("NoVis").GetComponent<Toggle>();
+        devModeToggle ??= GameObject.Find("DevMode").GetComponent<Toggle>();
+        templateToggle ??= GameObject.Find("TemplateToggle").GetComponent<Toggle>();
+
+        dumpButton ??= GameObject.Find("DumpFinder").GetComponent<Button>();
+        gamePathButton ??= GameObject.Find("GameFinder").GetComponent<Button>();
+        devPanel ??= GameObject.Find("DevPanel");
 
         dumpButton.interactable = false; // Disable the dump button until the dump toggle is enabled
     }
@@ -204,6 +217,8 @@ public class RunBinary : MonoBehaviour
         Debug.Log(executablePath);
         consoleText.text = executablePath;
 
+        checkLinuxMac();
+
         var startInfo = new ProcessStartInfo
         {
             FileName = executablePath,
@@ -257,7 +272,7 @@ public class RunBinary : MonoBehaviour
             consoleText.text += "\nOutput: " + CLIout;
         }
     }
-    #endregion
+#endregion
 
     #region Sub Functions
     static string CleanSaveFileName(string fullPath)
@@ -269,6 +284,11 @@ public class RunBinary : MonoBehaviour
         string cleaned = fileNameNoExt.Replace('_', ' ');
 
         return cleaned;
+    }
+
+    public void CloseButton()
+    {
+        Application.Quit();
     }
     #endregion
 
@@ -313,7 +333,16 @@ public class RunBinary : MonoBehaviour
         yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Folders, false, null, null, "Select Game Folder", "Select");
         if (FileBrowser.Success)
         {
-            gamePath = FileBrowser.Result[0];
+            if (FileBrowser.Result[0].Contains(@"steamapps\common\Crusader Kings III"))
+            {
+                gamePathButton.image.color = Color.green;
+                gamePath = FileBrowser.Result[0];
+            }
+            else
+            {
+                gamePathButton.image.color = Color.red;
+                gamePath = FileBrowser.Result[0];
+            }
         }
     }
 
