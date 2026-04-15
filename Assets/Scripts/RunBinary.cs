@@ -31,6 +31,7 @@ public class RunBinary : MonoBehaviour
     // UI Button Variables
     [SerializeField] Button gamePathButton; // Button to open the save file dialog
     [SerializeField] Button dumpButton; // Button to run the dump command
+    [SerializeField] GameObject logButton; // Button to open the log file
 
     // UI Panel Variables
     [SerializeField] GameObject devPanel; // Panel to show the dev options
@@ -43,6 +44,7 @@ public class RunBinary : MonoBehaviour
     string gitPath; // The path to the git folder
     string executablePath; // Path to the executable
     string jsonDump; // The name of the dump file
+    string logPath; // The path to the log file
 
     //Output Variables 
     int depth; // The depth of the output
@@ -63,6 +65,8 @@ public class RunBinary : MonoBehaviour
     {
         DefineArgs();
         DefineSerialized();
+        InitPaths();
+        DisableLanguage();
     }
 
     void checkLinuxMac()
@@ -89,6 +93,8 @@ public class RunBinary : MonoBehaviour
 
         dumpButton ??= GameObject.Find("DumpFinder").GetComponent<Button>();
         gamePathButton ??= GameObject.Find("GameFinder").GetComponent<Button>();
+        logButton ??= GameObject.Find("LogButton");
+
         devPanel ??= GameObject.Find("DevPanel");
 
         dumpButton.interactable = false; // Disable the dump button until the dump toggle is enabled
@@ -104,6 +110,7 @@ public class RunBinary : MonoBehaviour
         gitPath = null;
         executablePath = null;
         jsonDump = @"\dump.json";
+        logPath = null;
 
         depth = 3;
         language = "english";
@@ -115,6 +122,11 @@ public class RunBinary : MonoBehaviour
         noInteraction = true;
 
         useInternal = false;
+    }
+    void DisableLanguage() 
+    {
+        languageDropdown.interactable = false;
+        languageDropdown.itemText.text = "Language selection is not available on this platform.";  
     }
     #endregion
 
@@ -146,7 +158,12 @@ public class RunBinary : MonoBehaviour
     public void SetLanguage()
     {
         language = languageDropdown.options[languageDropdown.value].text;
-        language.ToLower();
+        language = language.ToLower();
+        if (language == "simplified chinese")
+        {
+            language = "simp_chinese"; //As the CLI uses "simp_chinese" instead of "simplified chinese" for the language argument, we need to change it here
+        }
+        Debug.Log("Language set to: " + language);
     }
 
     public void SetDepth()
@@ -165,6 +182,17 @@ public class RunBinary : MonoBehaviour
         {
             dump = false;
             dumpButton.interactable = false;
+        }
+    }
+    public void OpenLog()
+    {
+        if (!string.IsNullOrEmpty(logPath) && File.Exists(logPath))
+        {
+            Process.Start("explorer.exe", $"/select,\"{logPath}\"");
+        }
+        else
+        {
+            consoleText.text += "Log file not found: " + logPath;
         }
     }
     #endregion
@@ -214,7 +242,6 @@ public class RunBinary : MonoBehaviour
     public void runCLI()
     {
         executablePath = Path.Combine(Application.streamingAssetsPath, "CK3 Extractor", "Binary", "ck3_history_extractor.exe");
-        Debug.Log(executablePath);
         consoleText.text = executablePath;
 
         checkLinuxMac();
@@ -248,28 +275,32 @@ public class RunBinary : MonoBehaviour
             startInfo.ArgumentList.Add(dumpData);
         }
 
-        Debug.Log("Running CLI with arguments: " + string.Join(" ", startInfo.ArgumentList));
         consoleText.text = "Running CLI with arguments: " + string.Join(" ", startInfo.ArgumentList);
 
         var process = new Process { StartInfo = startInfo };
 
         process.Start();
 
-        consoleText.text += "\nProcess started with PID: " + process.Id + "A terminal should be running";
+        consoleText.text += "\nProcess started with PID: " + process.Id;
         string CLIout = process.StandardOutput.ReadToEnd();
         string CLIerr = process.StandardError.ReadToEnd();
+        consoleText.text += "\nStandard Output: " + CLIout;
 
-        consoleText.text += "\nProcess exited with code: " + process.ExitCode;
+        process.WaitForExit();
+        consoleText.text += "\nProcess exited with code: " + process.ExitCode;       
+
 
         if (!string.IsNullOrEmpty(CLIerr))
         {
-            Debug.LogError("Error: " + CLIerr);
             consoleText.text += "\nError: " + CLIerr;
+            logPath = ExtractReportPath(CLIerr);
+            logButton.SetActive(true);
         }
         else
         {
-            Debug.Log("Output: " + CLIout);
             consoleText.text += "\nOutput: " + CLIout;
+            logButton.SetActive(false);
+            Process.Start("explorer.exe", output);
         }
     }
 #endregion
@@ -286,85 +317,150 @@ public class RunBinary : MonoBehaviour
         return cleaned;
     }
 
-    public void CloseButton()
+    public string ExtractReportPath(string errorText)
     {
-        Application.Quit();
+        int start = errorText.IndexOf('"') + 1;
+        int end = errorText.IndexOf('"', start);
+
+        if (start > 0 && end > start)
+            return errorText.Substring(start, end - start);
+
+        return null;
+    }
+
+    public void UpdateButton()
+    {
+        Process.Start(Path.Combine(Application.streamingAssetsPath, "CK3 Extractor", "Binary"));
+    }
+
+    public void HelpButton()
+    {
+        Process.Start(Path.Combine(Application.streamingAssetsPath, "README.md"));
+    }
+
+    public void OriginalRepo()
+    {
+        Process.Start("https://github.com/TCA166/CK3-history-extractor");
     }
     #endregion
 
-    #region Dialog Functions
+        #region Dialog Functions
     // Coroutines to open the file dialogs, these will be called by the button functions
     IEnumerator SaveDialog()
     {
-        /* 
-         public static IEnumerator WaitForLoadDialog(   
-                                                        PickMode pickMode, 
-                                                        bool allowMultiSelection = false, 
-                                                        string initialPath = null, 
-                                                        string initialFilename = null, 
-                                                        string title = "Load", 
-                                                        string loadButtonText = "Select" 
-                                                    );
-         */
-        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Files, false, null, null, "Select Game Save File", "Load");
+        string initialPath = string.IsNullOrEmpty(filename) ? null : Path.GetDirectoryName(filename);
+        string initialFile = string.IsNullOrEmpty(filename) ? null : Path.GetFileName(filename);
+
+        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Files, false, initialPath, initialFile, "Select Game Save File", "Load");
 
         if (FileBrowser.Success)
         {
             filename = FileBrowser.Result[0];
             saveFileText.text = CleanSaveFileName(filename);
             saveFileText.enableAutoSizing = true;
+            SavePaths();
         }
-
     }
 
     IEnumerator OutputDialog()
     {
+        string initialPath = string.IsNullOrEmpty(output) ? null : output;
 
-        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Folders, false, null, null, "Select Output Folder", "Select");
+        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Folders, false, initialPath, null, "Select Output Folder", "Select");
 
         if (FileBrowser.Success)
         {
             output = FileBrowser.Result[0];
+            SavePaths();
         }
     }
 
     IEnumerator GamePathDialog()
     {
-        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Folders, false, null, null, "Select Game Folder", "Select");
+        string initialPath = string.IsNullOrEmpty(gamePath) ? null : gamePath;
+
+        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Folders, false, initialPath, null, "Select Game Folder", "Select");
+
         if (FileBrowser.Success)
         {
-            if (FileBrowser.Result[0].Contains(@"steamapps\common\Crusader Kings III"))
-            {
-                gamePathButton.image.color = Color.green;
-                gamePath = FileBrowser.Result[0];
-            }
-            else
-            {
-                gamePathButton.image.color = Color.red;
-                gamePath = FileBrowser.Result[0];
-            }
+            gamePath = FileBrowser.Result[0];
+            gamePathButton.image.color = gamePath.Contains(@"steamapps\common\Crusader Kings III") ? Color.green : Color.red;
+            SavePaths();
         }
     }
 
     IEnumerator DumpData()
     {
-        //Run the executable with the given parameters to dump the data, then read the output and store it in the dumpData variable
-        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Folders, false, null, null, "Select Dump Folder", "Select");
+        string initialPath = string.IsNullOrEmpty(dumpData) ? null : dumpData;
+
+        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Folders, false, initialPath, null, "Select Dump Folder", "Select");
+
         if (FileBrowser.Success)
         {
             dumpData = FileBrowser.Result[0];
+            SavePaths();
         }
-
     }
 
     IEnumerator GitFolder()
     {
-        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Folders, false, null, null, "Select Git Folder", "Select");
+        string initialPath = string.IsNullOrEmpty(gitPath) ? null : gitPath;
+
+        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Folders, false, initialPath, null, "Select Git Folder", "Select");
+
         if (FileBrowser.Success)
         {
-            string gitPath = FileBrowser.Result[0];
+            gitPath = FileBrowser.Result[0];
+            SavePaths();
         }
     }
     #endregion
 
+
+    #region Saved Paths
+    private static string SavedPathsFile;
+
+    [System.Serializable]
+    private class SavedPaths
+    {
+        public string filename;
+        public string output;
+        public string gamePath;
+        public string dumpData;
+        public string gitPath;
+    }
+
+    void InitPaths()
+    {
+        SavedPathsFile = Path.Combine(Application.persistentDataPath, "savedPaths.json");
+        SavedPaths saved = LoadPaths();
+        filename = saved.filename ?? "";
+        output = saved.output ?? "";
+        gamePath = saved.gamePath ?? "";
+        dumpData = saved.dumpData ?? "";
+        gitPath = saved.gitPath ?? "";
+    }
+
+    void SavePaths()
+    {
+        SavedPaths paths = new SavedPaths
+        {
+            filename = filename,
+            output = output,
+            gamePath = gamePath,
+            dumpData = dumpData,
+            gitPath = gitPath
+        };
+        File.WriteAllText(SavedPathsFile, JsonUtility.ToJson(paths, true));
+    }
+
+    private SavedPaths LoadPaths()
+    {
+        if (File.Exists(SavedPathsFile))
+            return JsonUtility.FromJson<SavedPaths>(File.ReadAllText(SavedPathsFile));
+        return new SavedPaths();
+    }
+    #endregion
 }
+
+
