@@ -267,6 +267,7 @@ public class RunBinary : MonoBehaviour
         //if (dump) startInfo.ArgumentList.Add("-- --dump " + dumpData + jsonDump);
         if (noInteraction) startInfo.ArgumentList.Add("--no-interaction");
         if (useInternal) startInfo.ArgumentList.Add("--use-internal-templates");
+        if (!string.IsNullOrEmpty(include)) { startInfo.ArgumentList.Add("--include"); startInfo.ArgumentList.Add(include); }
 
         // Add --dump-data only if dump is enabled and dumpData is set
         if (dump && !string.IsNullOrEmpty(dumpData))
@@ -342,9 +343,14 @@ public class RunBinary : MonoBehaviour
     {
         Process.Start("https://github.com/TCA166/CK3-history-extractor");
     }
+
+    public void ModFolderButton()
+    {
+        StartCoroutine(ModFolder());
+    }
     #endregion
 
-        #region Dialog Functions
+    #region Dialog Functions
     // Coroutines to open the file dialogs, these will be called by the button functions
     IEnumerator SaveDialog()
     {
@@ -411,6 +417,18 @@ public class RunBinary : MonoBehaviour
         if (FileBrowser.Success)
         {
             gitPath = FileBrowser.Result[0];
+            SavePaths();
+        }
+    }
+
+    IEnumerator ModFolder()
+    {
+        string initialPath = string.IsNullOrEmpty(include) ? null : include;
+
+        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Folders, false, initialPath, null, "Select Mod Folder", "Select");
+        if (FileBrowser.Success)
+        {
+            include = FileBrowser.Result[0];
             SavePaths();
         }
     }

@@ -131,13 +131,14 @@ GameObject:
   - component: {fileID: 4290129}
   - component: {fileID: 4290128}
   - component: {fileID: 4290127}
+  - component: {fileID: 4290130}
   m_Layer: 5
-  m_Name: Mods
+  m_Name: ModsFinder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &4290126
 RectTransform:
   m_ObjectHideFlags: 0
@@ -155,7 +156,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -678, y: 58.202988}
+  m_AnchoredPosition: {x: -678, y: 88}
   m_SizeDelta: {x: 380, y: 85}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &4290127
@@ -201,7 +202,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 4290128}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 900469947}
+        m_TargetAssemblyTypeName: RunBinary, Assembly-CSharp
+        m_MethodName: ModFolderButton
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &4290128
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -240,6 +253,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4290125}
   m_CullTransparentMesh: 1
+--- !u!114 &4290130
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4290125}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8e9f52e5ca306d419f4d7be9c06af53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OnHover
+  tooltipText: Select the mods folder!
 --- !u!1 &7755627
 GameObject:
   m_ObjectHideFlags: 0
@@ -405,7 +431,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &90010293
 RectTransform:
   m_ObjectHideFlags: 0
@@ -422,7 +448,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -164.26, y: 125.4069}
+  m_AnchoredPosition: {x: 223.91, y: 89}
   m_SizeDelta: {x: 1389.5, y: 59.0239}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &90010294
@@ -2615,7 +2641,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 177.47, y: 42.144}
+  m_AnchoredPosition: {x: 174.46997, y: -29.355976}
   m_SizeDelta: {x: 1300.7, y: 84.288}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &710971348
@@ -7393,7 +7419,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -678, y: 42.499996}
+  m_AnchoredPosition: {x: -681, y: -29}
   m_SizeDelta: {x: 380, y: 85}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1577222302
